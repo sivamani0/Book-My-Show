@@ -1,7 +1,6 @@
 pipeline {
 agent any
 
-```
 tools {
     jdk 'jdk17'
     nodejs 'node23'
@@ -81,6 +80,5 @@ stages {
     }
 
 }
-```
 
 }
