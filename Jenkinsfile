@@ -12,7 +12,7 @@ pipeline {
                 cleanWs()
             }
         }
-
+ 
         stage('Checkout Code') {
             steps {
                 git branch: 'Devops-features', url: 'https://github.com/sivamani0/Book-My-Show.git'
@@ -31,7 +31,11 @@ pipeline {
             steps {
                 dir('bookmyshow-app') {
                     withSonarQubeEnv('sonarqube') {
-                        sh 'sonarqube'
+                        sh '''
+                        sonar-scanner \
+                        -Dsonar.projectKey=bookmyshow \
+                        -Dsonar.sources=. 
+                        '''
                     }
                 }
             }
