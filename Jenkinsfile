@@ -42,7 +42,9 @@ stages {
                     ${SCANNER_HOME}/bin/sonar-scanner \
                     -Dsonar.projectName=BookMyShow \
                     -Dsonar.projectKey=BookMyShow \
-                    -Dsonar.sources=.
+                    -Dsonar.sources=. \
+                    -Dsonar.host.url=$SONAR_HOST_URL \
+                    -Dsonar.login=$SONAR_AUTH_TOKEN
                     """
                 }
             }
@@ -51,7 +53,9 @@ stages {
 
     stage('Quality Gate') {
         steps {
-            waitForQualityGate abortPipeline: false
+            timeout(time: 5, unit: 'MINUTES') {
+                waitForQualityGate abortPipeline: false
+            }
         }
     }
 
