@@ -57,5 +57,51 @@ pipeline {
             }
         }
 
+        stage('Deploy to Kubernetes') {
+            steps {
+                sh 'kubectl apply -f deployment.yml'
+                sh 'kubectl apply -f service.yml'
+            }
+        }
+
+    }
+
+    post {
+
+        success {
+            emailext(
+                subject: "Jenkins Build SUCCESS",
+                body: """
+Pipeline executed successfully.
+
+Project: BookMyShow
+Build Number: ${env.BUILD_NUMBER}
+Job: ${env.JOB_NAME}
+
+Application deployed successfully.
+""",
+                to: "sivamaniyadav40297@gmail.com"
+            )
+        }
+
+        failure {
+            emailext(
+                subject: "Jenkins Build FAILED",
+                body: """
+Pipeline execution FAILED.
+
+Project: BookMyShow
+Build Number: ${env.BUILD_NUMBER}
+Job: ${env.JOB_NAME}
+
+Check Jenkins console logs.
+""",
+                to: "sivamaniyadav40297@gmail.com"
+            )
+        }
+
+        always {
+            echo "Pipeline finished."
+        }
     }
 }
