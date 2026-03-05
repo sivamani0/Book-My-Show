@@ -1,84 +1,61 @@
 pipeline {
-agent any
+    agent any
 
-tools {
-    jdk 'jdk17'
-    nodejs 'node23'
-}
-
-environment {
-    SCANNER_HOME = tool 'sonar-scanner'
-}
-
-stages {
-
-    stage('Clean Workspace') {
-        steps {
-            cleanWs()
-        }
+    tools {
+        nodejs 'nodejs'
     }
 
-    stage('Checkout Code from GitHub') {
-        steps {
-            git branch: 'Devops-features', url: 'https://github.com/sivamani0/Book-My-Show.git'
-            sh 'ls -la'
-        }
-    }
+    stages {
 
-    stage('Install Dependencies') {
-        steps {
-            dir('bookmyshow-app') {
-                sh 'npm install'
+        stage('Clean Workspace') {
+            steps {
+                cleanWs()
             }
         }
-    }
 
-    stage('SonarQube Analysis') {
-        steps {
-            dir('bookmyshow-app') {
-                withSonarQubeEnv('sonarqube') {
-                    sh """
-                    ${SCANNER_HOME}/bin/sonar-scanner \
-                    -Dsonar.projectName=BookMyShow \
-                    -Dsonar.projectKey=BookMyShow \
-                    -Dsonar.sources=. \
-                    -Dsonar.host.url=$SONAR_HOST_URL \
-                    -Dsonar.login=$SONAR_AUTH_TOKEN
-                    """
+        stage('Checkout Code') {
+            steps {
+                git branch: 'Devops-features', url: 'https://github.com/sivamani0/Book-My-Show.git'
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                dir('bookmyshow-app') {
+                    sh 'npm install'
                 }
             }
         }
-    }
 
-    stage('Quality Gate') {
-        steps {
-            timeout(time: 5, unit: 'MINUTES') {
-                waitForQualityGate abortPipeline: false
+        stage('SonarQube Analysis') {
+            steps {
+                dir('bookmyshow-app') {
+                    withSonarQubeEnv('sonarqube') {
+                        script {
+                          sh """
+                          ${tool 'sonar-scanner'}/bin/sonar-scanner \
+                          -Dsonar.projectKey=bookmyshow \
+                          -Dsonar.sources=.
+                          """
+                        }
+                    }
+                }
             }
         }
-    }
 
-    stage('Build Docker Image') {
-        steps {
-            dir('bookmyshow-app') {
-                sh 'docker build -t bookmyshow-app .'
+        stage('Build Docker Image') {
+            steps {
+                dir('bookmyshow-app') {
+                    sh 'docker build -t bookmyshow-app .'
+                }
             }
         }
-    }
 
-    stage('Stop Old Container') {
-        steps {
-            sh 'docker stop bookmyshow-container || true'
-            sh 'docker rm bookmyshow-container || true'
+        stage('Run Docker Container') {
+            steps {
+                sh 'docker run -d -p 3000:3000 bookmyshow-app'
+            }
         }
+
     }
-
-    stage('Run Docker Container') {
-        steps {
-            sh 'docker run -d -p 3000:3000 --name bookmyshow-container bookmyshow-app'
-        }
-    }
-
-}
-
 }
